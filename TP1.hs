@@ -18,11 +18,11 @@ cities graph = Data.List.nub $ concat [[c1,c2] | (c1, c2, _) <- graph]
 
 -- Description: O(n)
 areAdjacent :: RoadMap -> City -> City -> Bool
-areAdjacent = undefined
+areAdjacent graph v1 v2 = any (\(c1, c2, _) -> (c1 == v1 && c2 == v2) || (c1 == v2 && c2 == v1)) graph
 
 -- Description:
 distance :: RoadMap -> City -> City -> Maybe Distance
-distance = undefined
+distance graph v1 v2 = undefined
 
 -- Description:
 adjacent :: RoadMap -> City -> [(City,Distance)]
