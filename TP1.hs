@@ -12,26 +12,26 @@ type Distance = Int
 
 type RoadMap = [(City,City,Distance)] -- Edge
 
--- Description: nub é O(n^2) no pior dos casos
--- NOTA: Solução com lista auxiliar que é minimamente mais eficaz - O(n*(2*m)), onde n é o numero de edges, e m é o numero de cidades encontradas (<=2n)
+-- Description: nub é O(E^2) no pior dos casos
+-- NOTA: Solução com lista auxiliar que é minimamente mais eficaz - O(E*2*m), onde E é o numero de edges, e m é o numero de cidades encontradas até então (<=2E)
 cities :: RoadMap -> [City]
-cities graph = Data.List.nub $ concat [[c1,c2] | (c1, c2, _) <- graph]
+cities graph = Data.List.nub $ concat [[c1,c2] | (c1,c2,_) <- graph]
 
--- Description: O(n) - traversal of any function
+-- Description: O(E) - traversal of the any function
 areAdjacent :: RoadMap -> City -> City -> Bool
-areAdjacent graph v1 v2 = any (\(c1, c2, _) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph
+areAdjacent graph v1 v2 = any (\(c1,c2,_) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph
 
--- Description: O(n) - traversal of find function
+-- Description: O(E) - traversal of find function
 distance :: RoadMap -> City -> City -> Maybe Distance
-distance graph v1 v2 = case Data.List.find (\(c1, c2, _) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph of
-                       Just (_, _, dist) -> Just dist
+distance graph v1 v2 = case Data.List.find (\(c1,c2,_) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph of
                        Nothing -> Nothing
+                       Just (_,_,dist) -> Just dist
 
--- Description: O(n) - traversal
+-- Description: O(E) - traversal
 adjacent :: RoadMap -> City -> [(City, Distance)]
 adjacent graph v = [(if v == c1 then c2 else c1, d) | (c1, c2, d) <- graph, v == c1 || v == c2]
 
--- Description:
+-- Description: zip, drop -> O(n) -> O(2n); foldl is O(n-1) pairs in path of n cities in path; distance is called for each pair -> O(E); Total: O(E*(n-1)); At worst (path thru all the vertices) -> O(E*V)
 pathDistance :: RoadMap -> Path -> Maybe Distance
 pathDistance _ [] = Just 0
 pathDistance _ [_] = Just 0
@@ -39,13 +39,16 @@ pathDistance graph path = foldl accPath (Just 0) (zip path (drop 1 path))
   where 
     accPath :: Maybe Distance -> (City, City) -> Maybe Distance
     accPath Nothing _ = Nothing
-    accPath (Just total) (v1, v2) = case distance graph v1 v2 of
-                                    Just currDist -> Just (total + currDist)
-                                    Nothing -> Nothing
+    accPath (Just total) (v1,v2) = case distance graph v1 v2 of
+                                   Nothing -> Nothing
+                                   Just currDist -> Just (total + currDist)
 
--- Description:
+-- Description: [res] -> O(V); cI -> O(E); cC -> O(E^2) for cities function, O(E) or O(2E) for length and filter for each city -> O(V*E); sCC -> O(V*log V)
 rome :: RoadMap -> [City]
-rome = undefined
+rome graph = [res | (res,_) <- sortedCityCounts]
+  where cityInstances = concat [[c1,c2] | (c1,c2,_) <- graph] -- Get all city occurences in edges (represents the number of edges connected to each city)
+        cityCounts = [(city, length $ filter (== city) cityInstances) | city <- cities graph] -- Count the number of occurences for each city
+        sortedCityCounts = Data.List.sortBy (\(_,count1) (_,count2) -> compare count2 count1) cityCounts -- Order by the city with most edges
 
 -- Description:
 isStronglyConnected :: RoadMap -> Bool
