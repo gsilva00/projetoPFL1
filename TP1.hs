@@ -24,16 +24,24 @@ areAdjacent graph v1 v2 = any (\(c1, c2, _) -> (v1 == c1 && v2 == c2) || (v1 == 
 -- Description: O(n) - traversal of find function
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance graph v1 v2 = case Data.List.find (\(c1, c2, _) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph of
-  Just (_, _, dist) -> Just dist
-  Nothing -> Nothing
+                       Just (_, _, dist) -> Just dist
+                       Nothing -> Nothing
 
 -- Description: O(n) - traversal
 adjacent :: RoadMap -> City -> [(City, Distance)]
-adjacent graph v = [(if c1 == v then c2 else c1, d) | (c1, c2, d) <- graph, c1 == v || c2 == v]
+adjacent graph v = [(if v == c1 then c2 else c1, d) | (c1, c2, d) <- graph, v == c1 || v == c2]
 
 -- Description:
 pathDistance :: RoadMap -> Path -> Maybe Distance
-pathDistance = undefined
+pathDistance _ [] = Just 0
+pathDistance _ [_] = Just 0
+pathDistance graph path = foldl accPath (Just 0) (zip path (drop 1 path))
+  where 
+    accPath :: Maybe Distance -> (City, City) -> Maybe Distance
+    accPath Nothing _ = Nothing
+    accPath (Just total) (v1, v2) = case distance graph v1 v2 of
+                                    Just currDist -> Just (total + currDist)
+                                    Nothing -> Nothing
 
 -- Description:
 rome :: RoadMap -> [City]
