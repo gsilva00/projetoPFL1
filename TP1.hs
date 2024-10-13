@@ -1,4 +1,4 @@
---import qualified Data.List
+import qualified Data.List
 --import qualified Data.Array
 --import qualified Data.Bits
 
@@ -6,36 +6,45 @@
 
 -- Uncomment the some/all of the first three lines to import the modules, do not change the code of these lines.
 
-type City = String
+type City = String -- Vertex
 type Path = [City]
 type Distance = Int
 
-type RoadMap = [(City,City,Distance)]
+type RoadMap = [(City,City,Distance)] -- Edge
 
+-- Description: nub é O(n^2) no pior dos casos, há uma solução com lista auxiliar que é minimamente mais eficaz - O(n*(2*m)), onde n é o numero de edges, e m é o numero de cidades encontradas (<=2n)
 cities :: RoadMap -> [City]
-cities = undefined -- modifiy this line to implement the solution, for each exercise not solved, leave the function definition like this
+cities graph = Data.List.nub $ concat [[c1,c2] | (c1, c2, _) <- graph]
 
+-- Description: O(n)
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent = undefined
 
+-- Description:
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance = undefined
 
+-- Description:
 adjacent :: RoadMap -> City -> [(City,Distance)]
 adjacent = undefined
 
+-- Description:
 pathDistance :: RoadMap -> Path -> Maybe Distance
 pathDistance = undefined
 
+-- Description:
 rome :: RoadMap -> [City]
 rome = undefined
 
+-- Description:
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected = undefined
 
+-- Description:
 shortestPath :: RoadMap -> City -> City -> [Path]
 shortestPath = undefined
 
+-- Description:
 travelSales :: RoadMap -> Path
 travelSales = undefined
 
