@@ -16,13 +16,15 @@ type RoadMap = [(City,City,Distance)] -- Edge
 cities :: RoadMap -> [City]
 cities graph = Data.List.nub $ concat [[c1,c2] | (c1, c2, _) <- graph]
 
--- Description: O(n)
+-- Description: O(n) - traversal
 areAdjacent :: RoadMap -> City -> City -> Bool
-areAdjacent graph v1 v2 = any (\(c1, c2, _) -> (c1 == v1 && c2 == v2) || (c1 == v2 && c2 == v1)) graph
+areAdjacent graph v1 v2 = any (\(c1, c2, _) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph
 
 -- Description:
 distance :: RoadMap -> City -> City -> Maybe Distance
-distance graph v1 v2 = undefined
+distance graph v1 v2 = case Data.List.find (\(c1, c2, _) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph of
+  Just (_, _, dist) -> Just dist
+  Nothing -> Nothing
 
 -- Description:
 adjacent :: RoadMap -> City -> [(City,Distance)]
