@@ -12,23 +12,24 @@ type Distance = Int
 
 type RoadMap = [(City,City,Distance)] -- Edge
 
--- Description: nub é O(n^2) no pior dos casos, há uma solução com lista auxiliar que é minimamente mais eficaz - O(n*(2*m)), onde n é o numero de edges, e m é o numero de cidades encontradas (<=2n)
+-- Description: nub é O(n^2) no pior dos casos
+-- NOTA: Solução com lista auxiliar que é minimamente mais eficaz - O(n*(2*m)), onde n é o numero de edges, e m é o numero de cidades encontradas (<=2n)
 cities :: RoadMap -> [City]
 cities graph = Data.List.nub $ concat [[c1,c2] | (c1, c2, _) <- graph]
 
--- Description: O(n) - traversal
+-- Description: O(n) - traversal of any function
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent graph v1 v2 = any (\(c1, c2, _) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph
 
--- Description:
+-- Description: O(n) - traversal of find function
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance graph v1 v2 = case Data.List.find (\(c1, c2, _) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph of
   Just (_, _, dist) -> Just dist
   Nothing -> Nothing
 
--- Description:
-adjacent :: RoadMap -> City -> [(City,Distance)]
-adjacent = undefined
+-- Description: O(n) - traversal
+adjacent :: RoadMap -> City -> [(City, Distance)]
+adjacent graph v = [(if c1 == v then c2 else c1, d) | (c1, c2, d) <- graph, c1 == v || c2 == v]
 
 -- Description:
 pathDistance :: RoadMap -> Path -> Maybe Distance
