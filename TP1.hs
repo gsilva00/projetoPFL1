@@ -1,6 +1,6 @@
 import qualified Data.List
---import qualified Data.Array
---import qualified Data.Bits
+--import qualified Data.Array -- Definir hash tables (map) -> Representação 2 enunciado
+--import qualified Data.Bits -- Usar bit masks para cidades visitadas (bastante mais rápido)
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -10,12 +10,17 @@ type City = String -- Vertex
 type Path = [City]
 type Distance = Int
 
-type RoadMap = [(City,City,Distance)] -- Edge
+type RoadMap = [(City,City,Distance)] -- List of Edges
 
 -- Description: nub é O(E^2) no pior dos casos
+-- !! NOTA: Dar sort e depois remover os duplicados é mais rápido -> O(listComp + concat + sort + rmDup) O(E + E + 2E log 2E + E) -> O(E log E) -> VERSÃO MAIS RECENTE
 -- NOTA: Solução com lista auxiliar que é minimamente mais eficaz - O(E*2*m), onde E é o numero de edges, e m é o numero de cidades encontradas até então (<=2E)
 cities :: RoadMap -> [City]
-cities graph = Data.List.nub $ concat [[c1,c2] | (c1,c2,_) <- graph]
+cities graph = rmDup . Data.List.sort $ concat [[c1,c2] | (c1,c2,_) <- graph]
+  where
+    rmDup :: (Eq a) => [a] -> [a]
+    rmDup [] = []
+    rmDup (x:xs) = x : rmDup (dropWhile (== x) xs)
 
 -- Description: O(E) - traversal of the any function
 areAdjacent :: RoadMap -> City -> City -> Bool
@@ -29,7 +34,7 @@ distance graph v1 v2 = case Data.List.find (\(c1,c2,_) -> (v1 == c1 && v2 == c2)
 
 -- Description: O(E) - traversal
 adjacent :: RoadMap -> City -> [(City, Distance)]
-adjacent graph v = [(if v == c1 then c2 else c1, d) | (c1, c2, d) <- graph, v == c1 || v == c2]
+adjacent graph v = [(if v == c1 then c2 else c1, d) | (c1,c2,d) <- graph, v == c1 || v == c2]
 
 -- Description: zip, drop -> O(n) -> O(2n); foldl is O(n-1) pairs in path of n cities in path; distance is called for each pair -> O(E); Total: O(E*(n-1)); At worst (path thru all the vertices) -> O(E*V)
 pathDistance :: RoadMap -> Path -> Maybe Distance
@@ -37,8 +42,8 @@ pathDistance _ [] = Just 0
 pathDistance _ [_] = Just 0
 pathDistance graph path = foldl accPath (Just 0) (zip path (drop 1 path))
   where 
-    accPath :: Maybe Distance -> (City, City) -> Maybe Distance
-    accPath Nothing _ = Nothing
+    accPath :: Maybe Distance -> (City, City) -> Maybe Distance -- Helper function
+    accPath Nothing _ = Nothing -- if any of the edges doesn't exist (distance call returns Nothing) -> the path returns Nothing
     accPath (Just total) (v1,v2) = case distance graph v1 v2 of
                                    Nothing -> Nothing
                                    Just currDist -> Just (total + currDist)
@@ -46,21 +51,22 @@ pathDistance graph path = foldl accPath (Just 0) (zip path (drop 1 path))
 -- Description: [res] -> O(V); cI -> O(E); cC -> O(E^2) for cities function, O(E) or O(2E) for length and filter for each city -> O(V*E); sCC -> O(V*log V)
 rome :: RoadMap -> [City]
 rome graph = [res | (res,_) <- sortedCityCounts]
-  where cityInstances = concat [[c1,c2] | (c1,c2,_) <- graph] -- Get all city occurences in edges (represents the number of edges connected to each city)
-        cityCounts = [(city, length $ filter (== city) cityInstances) | city <- cities graph] -- Count the number of occurences for each city
-        sortedCityCounts = Data.List.sortBy (\(_,count1) (_,count2) -> compare count2 count1) cityCounts -- Order by the city with most edges
+  where 
+    cityInstances = concat [[c1,c2] | (c1,c2,_) <- graph] -- Get all city occurences in edges (represents the number of edges connected to each city)
+    cityCounts = [(city, length $ filter (== city) cityInstances) | city <- cities graph] -- Count the number of occurences for each city
+    sortedCityCounts = Data.List.sortBy (\(_,count1) (_,count2) -> compare count2 count1) cityCounts -- Order by the city with most edges
 
 -- Description:
 isStronglyConnected :: RoadMap -> Bool
-isStronglyConnected = undefined
+isStronglyConnected graph = undefined
 
--- Description:
+-- Description: Dijkstra (lista de adjacencias)
 shortestPath :: RoadMap -> City -> City -> [Path]
-shortestPath = undefined
+shortestPath graph v1 v2 = undefined
 
--- Description:
+-- Description: definir um grafo com estrutura transformada com o where. No livro referido no enunciado O(n^2*2^n -> dynamic programming -> tabela -> nos +infinito pode-se usar nothing
 travelSales :: RoadMap -> Path
-travelSales = undefined
+travelSales graph = undefined
 
 tspBruteForce :: RoadMap -> Path
 tspBruteForce = undefined -- only for groups of 3 people; groups of 2 people: do not edit this function
