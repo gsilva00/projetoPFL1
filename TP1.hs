@@ -1,6 +1,6 @@
 import qualified Data.List
---import qualified Data.Array -- Definir hash tables (map) -> Representação 2 enunciado
---import qualified Data.Bits -- Usar bit masks para cidades visitadas (bastante mais rápido)
+import qualified Data.Array -- Definir hash tables (map) -> Representação 2 enunciado
+import qualified Data.Bits -- Usar bit masks para cidades visitadas (bastante mais rápido)
 
 -- PFL 2024/2025 Practical assignment 1
 
@@ -22,11 +22,11 @@ cities graph = rmDup . Data.List.sort $ concat [[c1,c2] | (c1,c2,_) <- graph]
     rmDup [] = []
     rmDup (x:xs) = x : rmDup (dropWhile (== x) xs)
 
--- Description: O(E) - traversal of the any function
+-- Description: O(E) - traversal of the any function - stops at first True (lazy)
 areAdjacent :: RoadMap -> City -> City -> Bool
 areAdjacent graph v1 v2 = any (\(c1,c2,_) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph
 
--- Description: O(E) - traversal of find function
+-- Description: O(E) - traversal of find function - stops at first element found
 distance :: RoadMap -> City -> City -> Maybe Distance
 distance graph v1 v2 = case Data.List.find (\(c1,c2,_) -> (v1 == c1 && v2 == c2) || (v1 == c2 && v2 == c1)) graph of
                        Nothing -> Nothing
@@ -41,7 +41,7 @@ pathDistance :: RoadMap -> Path -> Maybe Distance
 pathDistance _ [] = Just 0
 pathDistance _ [_] = Just 0
 pathDistance graph path = foldl accPath (Just 0) (zip path (drop 1 path))
-  where 
+  where
     accPath :: Maybe Distance -> (City, City) -> Maybe Distance -- Helper function
     accPath Nothing _ = Nothing -- if any of the edges doesn't exist (distance call returns Nothing) -> the path returns Nothing
     accPath (Just total) (v1,v2) = case distance graph v1 v2 of
@@ -51,14 +51,28 @@ pathDistance graph path = foldl accPath (Just 0) (zip path (drop 1 path))
 -- Description: [res] -> O(V); cI -> O(E); cC -> O(E^2) for cities function, O(E) or O(2E) for length and filter for each city -> O(V*E); sCC -> O(V*log V)
 rome :: RoadMap -> [City]
 rome graph = [res | (res,_) <- sortedCityCounts]
-  where 
+  where
     cityInstances = concat [[c1,c2] | (c1,c2,_) <- graph] -- Get all city occurences in edges (represents the number of edges connected to each city)
     cityCounts = [(city, length $ filter (== city) cityInstances) | city <- cities graph] -- Count the number of occurences for each city
     sortedCityCounts = Data.List.sortBy (\(_,count1) (_,count2) -> compare count2 count1) cityCounts -- Order by the city with most edges
 
 -- Description:
 isStronglyConnected :: RoadMap -> Bool
-isStronglyConnected graph = undefined
+isStronglyConnected [] = False
+isStronglyConnected graph@((x,_,_):xs) = allVisited (dfs graph (zip allCities [0..]) x 0)
+  where
+    allCities = cities graph
+    allVisited :: Int -> Bool
+    allVisited visited = visited == (2^length allCities - 1)
+
+dfs :: RoadMap -> [(City, Int)] -> City -> Int -> Int
+dfs graph allCities startV visited
+  | Data.Bits.testBit visited i = visited -- City already visited
+  | otherwise = foldl (\acc (c1,c2,_) -> if c1 == startV then dfs graph allCities c2 acc else acc) (Data.Bits.setBit visited i) graph -- acc is the altered visited argument
+  where
+    i = case Data.List.find (\(x,_) -> x == startV) allCities of
+        Just (_,index) -> index
+        Nothing -> error "City not found" -- Should never happen
 
 -- Description: Dijkstra (lista de adjacencias)
 shortestPath :: RoadMap -> City -> City -> [Path]
