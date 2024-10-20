@@ -10,7 +10,9 @@ type City = String -- Vertex
 type Path = [City]
 type Distance = Int
 
-type RoadMap = [(City,City,Distance)] -- List of Edges
+type Edge = (City,City,Distance) -- Edge (Added by us)
+
+type RoadMap = [Edge] -- List of Edges
 
 -- Description: nub é O(E^2) no pior dos casos
 -- !! NOTA: Dar sort e depois remover os duplicados é mais rápido -> O(listComp + concat + sort + rmDup) O(E + E + 2E log 2E + E) -> O(E log E) -> VERSÃO MAIS RECENTE
@@ -66,13 +68,19 @@ isStronglyConnected graph@((x,_,_):xs) = allVisited (dfs graph (zip allCities [0
     allVisited visited = visited == (2^length allCities - 1)
 
 dfs :: RoadMap -> [(City, Int)] -> City -> Int -> Int
-dfs graph allCities startV visited
+dfs graph allCities currC visited
   | Data.Bits.testBit visited i = visited -- City already visited
-  | otherwise = foldl (\acc (c1,c2,_) -> if c1 == startV then dfs graph allCities c2 acc else acc) (Data.Bits.setBit visited i) graph -- acc is the altered visited argument
+  | otherwise = foldl (\updatedVisited edge -> dfsVisit graph currC edge allCities updatedVisited) (Data.Bits.setBit visited i) graph
   where
-    i = case Data.List.find (\(x,_) -> x == startV) allCities of
+    i = case Data.List.find (\(x,_) -> x == currC) allCities of
         Just (_,index) -> index
         Nothing -> error "City not found" -- Should never happen
+    -- Handle undirected edges (by interpreting them as 2 edges in opposite directions)
+    dfsVisit :: RoadMap -> City -> Edge -> [(City, Int)] -> Int -> Int
+    dfsVisit graph currC (c1, c2, _) allCities visited
+      | c1 == currC = dfs graph allCities c2 visited
+      | c2 == currC = dfs graph allCities c1 visited
+      | otherwise = visited
 
 -- Description: Dijkstra (lista de adjacencias)
 shortestPath :: RoadMap -> City -> City -> [Path]
@@ -94,3 +102,7 @@ gTest2 = [("0","1",10),("0","2",15),("0","3",20),("1","2",35),("1","3",25),("2",
 
 gTest3 :: RoadMap -- unconnected graph
 gTest3 = [("0","1",4),("2","3",2)]
+
+-- Tests added by us
+gTest4 :: RoadMap
+gTest4 = [("0","2",4),("0","4",4),("0","5",4),("1","4",4),("1","5",4),("2","3",4),("2","4",4),("4","5",4)]
