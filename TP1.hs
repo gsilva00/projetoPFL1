@@ -9,10 +9,12 @@ import qualified Data.Bits -- Usar bit masks para cidades visitadas (bastante ma
 type City = String -- Vertex
 type Path = [City]
 type Distance = Int
+type Edge = (City,City,Distance) -- Edge (created by us)
 
-type Edge = (City,City,Distance) -- Edge (Added by us)
+type RoadMap = [(City,City,Distance)] -- List of Edges
+type AdjList = [(City,[(City,Distance)])] -- Adjacency list (created by us)
 
-type RoadMap = [Edge] -- List of Edges
+type Bitmask = Int
 
 -- Description: nub é O(E^2) no pior dos casos
 -- !! NOTA: Dar sort e depois remover os duplicados é mais rápido -> O(listComp + concat + sort + rmDup) O(E + E + 2E log 2E + E) -> O(E log E) -> VERSÃO MAIS RECENTE
@@ -20,7 +22,7 @@ type RoadMap = [Edge] -- List of Edges
 cities :: RoadMap -> [City]
 cities graph = rmDup . Data.List.sort $ concat [[c1,c2] | (c1,c2,_) <- graph]
   where
-    rmDup :: (Eq a) => [a] -> [a]
+    rmDup :: [City] -> [City]
     rmDup [] = []
     rmDup (x:xs) = x : rmDup (dropWhile (== x) xs)
 
@@ -50,7 +52,7 @@ pathDistance graph path = foldl accPath (Just 0) (zip path (drop 1 path))
                                    Nothing -> Nothing
                                    Just currDist -> Just (total + currDist)
 
--- Description: [res] -> O(V); cI -> O(E); cC -> O(E^2) for cities function, O(E) or O(2E) for length and filter for each city -> O(V*E); sCC -> O(V*log V)
+-- Description: [res] -> O(V); cI -> O(E); cC -> O(E log E) for cities function, O(E) or O(2E) for length and filter for each city -> O(V*E); sCC -> O(V*log V)
 rome :: RoadMap -> [City]
 rome graph = [res | (res,_) <- sortedCityCounts]
   where
@@ -61,37 +63,32 @@ rome graph = [res | (res,_) <- sortedCityCounts]
 -- Description:
 isStronglyConnected :: RoadMap -> Bool
 isStronglyConnected [] = False
-isStronglyConnected graph@((x,_,_):xs) = allVisited (dfs graph (zip allCities [0..]) x 0)
+isStronglyConnected graph@((x,_,_):xs) = allVisited (dfs graph x (zip allCities [0..]) 0)
   where
     allCities = cities graph
-    allVisited :: Int -> Bool
+    allVisited :: Bitmask -> Bool
     allVisited visited = visited == (2^length allCities - 1)
 
-dfs :: RoadMap -> [(City, Int)] -> City -> Int -> Int
-dfs graph allCities currC visited
+dfs :: RoadMap -> City -> [(City, Int)] -> Bitmask -> Bitmask
+dfs graph currC allCities visited
   | Data.Bits.testBit visited i = visited -- City already visited
-  | otherwise = foldl (\updatedVisited edge -> dfsVisit graph currC edge allCities updatedVisited) (Data.Bits.setBit visited i) graph
+  | otherwise = foldl (\updatedVisited (adjC, _) -> dfs graph adjC allCities updatedVisited) (Data.Bits.setBit visited i) (adjacent graph currC)
   where
     i = case Data.List.find (\(x,_) -> x == currC) allCities of
         Just (_,index) -> index
         Nothing -> error "City not found" -- Should never happen
-    -- Handle undirected edges (by interpreting them as 2 edges in opposite directions)
-    dfsVisit :: RoadMap -> City -> Edge -> [(City, Int)] -> Int -> Int
-    dfsVisit graph currC (c1, c2, _) allCities visited
-      | c1 == currC = dfs graph allCities c2 visited
-      | c2 == currC = dfs graph allCities c1 visited
-      | otherwise = visited
 
 -- Description: Dijkstra (lista de adjacencias)
 shortestPath :: RoadMap -> City -> City -> [Path]
 shortestPath graph v1 v2 = undefined
 
--- Description: definir um grafo com estrutura transformada com o where. No livro referido no enunciado O(n^2*2^n -> dynamic programming -> tabela -> nos +infinito pode-se usar nothing
+-- Description: definir um grafo com outra estrutura com o where. No livro referido no enunciado -> pseudocodigo com O(n^2*2^n -> dynamic programming -> tabela -> nas entradas da tabela com +infinito pode-se usar nothing
 travelSales :: RoadMap -> Path
 travelSales graph = undefined
 
+-- !! Only for groups of 3 people; groups of 2 people: do not edit this function
 tspBruteForce :: RoadMap -> Path
-tspBruteForce = undefined -- only for groups of 3 people; groups of 2 people: do not edit this function
+tspBruteForce = undefined
 
 -- Some graphs to test your work
 gTest1 :: RoadMap
